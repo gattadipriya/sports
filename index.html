@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SportsPulse — Live Scores & News</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0c10;
+      --surface: #12151c;
+      --card: #181c26;
+      --border: #252a38;
+      --accent: #e8ff00;
+      --accent2: #ff3d3d;
+      --accent3: #00d4ff;
+      --text: #f0f2f5;
+      --muted: #7a8199;
+      --live: #ff3d3d;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── TICKER ── */
+    .ticker-wrap {
+      background: var(--accent);
+      color: #000;
+      overflow: hidden;
+      white-space: nowrap;
+      height: 34px;
+      display: flex;
+      align-items: center;
+    }
+    .ticker-label {
+      background: #000;
+      color: var(--accent);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 2px;
+      padding: 0 16px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      z-index: 2;
+    }
+    .ticker-track {
+      display: inline-block;
+      animation: ticker 30s linear infinite;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+    .ticker-track span { margin: 0 32px; }
+    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 64px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .logo span { color: var(--text); }
+    .nav-links { display: flex; gap: 8px; list-style: none; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 4px;
+      transition: color .2s, background .2s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--accent);
+      background: rgba(232,255,0,.07);
+    }
+    .nav-right { display: flex; gap: 12px; align-items: center; }
+    .btn-search {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 6px;
+      transition: color .2s;
+    }
+    .btn-search:hover { color: var(--accent); }
+    .btn-signin {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .btn-signin:hover { background: #d4e800; transform: translateY(-1px); }
+
+    /* ── SEARCH OVERLAY ── */
+    .search-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.85);
+      z-index: 200;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 120px;
+    }
+    .search-overlay.active { display: flex; }
+    .search-box {
+      background: var(--card);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      width: 600px;
+      max-width: 90vw;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+    }
+    .search-box input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-size: 18px;
+    }
+    .search-box input::placeholder { color: var(--muted); }
+    .search-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      height: 480px;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      padding: 48px 40px;
+    }
+    .hero-slides { position: absolute; inset: 0; }
+    .hero-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity .8s ease;
+      background-size: cover;
+      background-position: center;
+    }
+    .hero-slide.active { opacity: 1; }
+    .hero-slide::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(10,12,16,.95) 0%, rgba(10,12,16,.4) 60%, transparent 100%);
+    }
+    .hero-content { position: relative; z-index: 2; max-width: 640px; }
+    .hero-tag {
+      background: var(--accent2);
+      color: #fff;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .hero h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(40px, 6vw, 72px);
+      line-height: 1;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      color: rgba(240,242,245,.7);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 460px;
+      margin-bottom: 20px;
+    }
+    .hero-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-read {
+      background: var(--accent);
+      color: #000;
+      text-decoration: none;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      border-radius: 4px;
+      transition: background .2s;
+    }
+    .btn-read:hover { background: #d4e800; }
+    .hero-dots { display: flex; gap: 8px; }
+    .hero-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      border: none;
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+    .hero-dot.active { background: var(--accent); transform: scale(1.3); }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
+    .section { padding: 48px 0; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    .view-all {
+      color: var(--accent);
+      text-decoration: none;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: opacity .2s;
+    }
+    .view-all:hover { opacity: .7; }
+
+    /* ── LIVE SCORES ── */
+    .scores-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .score-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      min-width: 220px;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s, transform .2s;
+    }
+    .score-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .score-card.live::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--live);
+    }
+    .score-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .score-league {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .live-badge {
+      background: var(--live);
+      color: #fff;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .live-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: #fff;
+      border-radius: 50%;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+    .score-teams { display: flex; flex-direction: column; gap: 8px; }
+    .score-team {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .team-info { display: flex; align-items: center; gap: 8px; }
+    .team-badge {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .team-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: .5px;
+    }
+    .team-score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 1px;
+    }
+    .team-score.leading { color: var(--accent); }
+    .score-time {
+      text-align: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    /* ── SPORT TABS ── */
+    .sport-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .sport-tab {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sport-tab:hover { border-color: var(--accent); color: var(--text); }
+    .sport-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+    }
+
+    /* ── NEWS GRID ── */
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .news-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s, transform .2s;
+    }
+    .news-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .news-card.featured {
+      grid-column: span 2;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .news-img {
+      aspect-ratio: 16/9;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .news-card.featured .news-img { aspect-ratio: auto; }
+    .news-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .4s ease;
+      display: block;
+    }
+    .news-card:hover .news-img img { transform: scale(1.05); }
+    .news-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+    }
+    .news-body { padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .news-category {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .cat-football { color: #00d4ff; }
+    .cat-basketball { color: #ff8c00; }
+    .cat-cricket { color: #a8ff00; }
+    .cat-tennis { color: #ff3d3d; }
+    .cat-f1 { color: #e8ff00; }
+    .news-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 1.3;
+      color: var(--text);
+    }
+    .news-card.featured .news-title { font-size: 22px; }
+    .news-excerpt {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .news-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 8px;
+    }
+    .news-date {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .news-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--muted); }
+    .news-author { font-size: 12px; color: var(--muted); }
+
+    /* ── STANDINGS TABLE ── */
+    .standings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .standings-table thead {
+      border-bottom: 2px solid var(--border);
+    }
+    .standings-table th {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 12px;
+      text-align: right;
+    }
+    .standings-table th:first-child,
+    .standings-table th:nth-child(2) { text-align: left; }
+    .standings-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .2s;
+      cursor: pointer;
+    }
+    .standings-table tbody tr:hover { background: rgba(255,255,255,.03); }
+    .standings-table td {
+      padding: 12px 12px;
+      text-align: right;
+      color: var(--text);
+    }
+    .standings-table td:first-child { text-align: left; color: var(--muted); width: 36px; }
+    .standings-table td:nth-child(2) { text-align: left; }
+    .team-row { display: flex; align-items: center; gap: 10px; }
+    .team-color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .pts-cell { font-weight: 700; color: var(--accent) !important; }
+    .form-badges { display: flex; gap: 3px; justify-content: flex-end; }
+    .form-w { background: #1a4d2a; color: #4ade80; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; padding: 2px 5px; border-radius: 3px; }
+    .form-d { background: #2a2a1a; color: #fbbf24; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; padding: 2px 5px; border-radius: 3px; }
+    .form-l { background: #4d1a1a; color: #f87171; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; padding: 2px 5px; border-radius: 3px; }
+    .qual-zone { border-left: 3px solid #00d4ff; }
+    .rel-zone { border-left: 3px solid var(--accent2); }
+
+    /* ── TWO COL ── */
+    .two-col { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+
+    /* ── VIDEO SECTION ── */
+    .video-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .video-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s, transform .2s;
+    }
+    .video-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .video-thumb {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: var(--surface);
+      overflow: hidden;
+    }
+    .video-thumb-inner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+    .play-btn {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.4);
+      transition: background .2s;
+    }
+    .video-card:hover .play-btn { background: rgba(0,0,0,.2); }
+    .play-icon {
+      width: 48px; height: 48px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #000;
+      transition: transform .2s;
+    }
+    .video-card:hover .play-icon { transform: scale(1.1); }
+    .video-duration {
+      position: absolute;
+      bottom: 8px; right: 8px;
+      background: rgba(0,0,0,.8);
+      color: var(--text);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+    .video-info { padding: 14px; }
+    .video-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+    .video-meta { font-size: 12px; color: var(--muted); }
+
+    /* ── SIDEBAR ── */
+    .sidebar { display: flex; flex-direction: column; gap: 20px; }
+    .widget {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .widget-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .widget-body { padding: 14px 18px; }
+
+    /* Upcoming matches */
+    .match-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .match-item:last-child { border-bottom: none; }
+    .match-item:hover { opacity: .8; }
+    .match-teams { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .match-team-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .match-time {
+      text-align: right;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--accent3);
+    }
+    .match-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Poll */
+    .poll-question {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 14px;
+      line-height: 1.3;
+    }
+    .poll-option {
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .poll-option-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+      height: 38px;
+      position: relative;
+      transition: border-color .2s;
+    }
+    .poll-option:hover .poll-option-bar { border-color: var(--accent); }
+    .poll-option-fill {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      background: rgba(232,255,0,.12);
+      border-radius: 4px;
+      transition: width .6s ease;
+    }
+    .poll-option-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .poll-pct { color: var(--accent); font-weight: 700; }
+    .poll-total { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    /* Newsletter */
+    .newsletter-text { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+    .newsletter-form { display: flex; flex-direction: column; gap: 8px; }
+    .newsletter-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .newsletter-input:focus { border-color: var(--accent); }
+    .newsletter-input::placeholder { color: var(--muted); }
+    .newsletter-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 10px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .newsletter-btn:hover { background: #d4e800; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 48px 40px 24px;
+      margin-top: 60px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      max-width: 1280px;
+      margin: 0 auto 40px;
+    }
+    .footer-brand p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 12px; max-width: 280px; }
+    .footer-col h4 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .footer-col a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color .2s;
+    }
+    .footer-col a:hover { color: var(--accent); }
+    .footer-bottom {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-bottom p { font-size: 13px; color: var(--muted); }
+    .social-links { display: flex; gap: 12px; }
+    .social-link {
+      width: 34px; height: 34px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      text-decoration: none;
+      transition: border-color .2s, transform .2s;
+      cursor: pointer;
+    }
+    .social-link:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.85);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      width: 400px;
+      max-width: 90vw;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .modal h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+    .modal p { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+    .modal-form { display: flex; flex-direction: column; gap: 12px; }
+    .modal-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-input::placeholder { color: var(--muted); }
+    .modal-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 13px;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background .2s;
+    }
+    .modal-btn:hover { background: #d4e800; }
+    .modal-switch { font-size: 13px; color: var(--muted); text-align: center; margin-top: 12px; }
+    .modal-switch a { color: var(--accent); cursor: pointer; text-decoration: none; }
+
+    /* responsive */
+    @media (max-width: 900px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 32px 20px; height: 380px; }
+      .container { padding: 0 20px; }
+      .news-grid { grid-template-columns: 1fr; }
+      .news-card.featured { grid-column: span 1; display: block; }
+      .two-col { grid-template-columns: 1fr; }
+      .video-grid { grid-template-columns: 1fr 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      footer { padding: 32px 20px 20px; }
+    }
+    @media (max-width: 600px) {
+      .video-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">⚡ BREAKING</div>
+  <div class="ticker-track" id="tickerTrack">
+    <span>🏆 Champions League QF: Real Madrid 3–1 Arsenal · HT</span>
+    <span>🏀 NBA: Lakers 108 – 102 Celtics · FINAL</span>
+    <span>🏏 IPL: MI vs CSK · Today 7:30 PM IST · Wankhede Stadium</span>
+    <span>🎾 Miami Open: Alcaraz advances to QF after Sinner retirement</span>
+    <span>🏎️ F1 Japanese GP: Verstappen on pole ahead of Leclerc</span>
+    <span>⚽ EPL: Salah scores hat-trick as Liverpool thrash United 5–0</span>
+    <span>🏆 Champions League QF: Real Madrid 3–1 Arsenal · HT</span>
+    <span>🏀 NBA: Lakers 108 – 102 Celtics · FINAL</span>
+    <span>🏏 IPL: MI vs CSK · Today 7:30 PM IST · Wankhede Stadium</span>
+    <span>🎾 Miami Open: Alcaraz advances to QF after Sinner retirement</span>
+    <span>🏎️ F1 Japanese GP: Verstappen on pole ahead of Leclerc</span>
+    <span>⚽ EPL: Salah scores hat-trick as Liverpool thrash United 5–0</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">Sport<span>Pulse</span></a>
+  <ul class="nav-links">
+    <li><a href="#" class="active">Home</a></li>
+    <li><a href="#scores">Scores</a></li>
+    <li><a href="#football">Football</a></li>
+    <li><a href="#cricket">Cricket</a></li>
+    <li><a href="#basketball">Basketball</a></li>
+    <li><a href="#tennis">Tennis</a></li>
+    <li><a href="#f1">F1</a></li>
+    <li><a href="#videos">Videos</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="btn-search" onclick="toggleSearch()" title="Search">🔍</button>
+    <button class="btn-signin" onclick="openModal('signin')">Sign In</button>
+  </div>
+</nav>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-box">
+    <span style="font-size:20px; color:var(--muted)">🔍</span>
+    <input type="text" placeholder="Search teams, players, news…" id="searchInput" onkeydown="handleSearch(event)"/>
+    <button class="search-close" onclick="toggleSearch()">✕</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-slides" id="heroSlides">
+    <div class="hero-slide active" style="background:linear-gradient(135deg,#0a2a1a,#1a4a2a,#0a1a3a)"></div>
+    <div class="hero-slide" style="background:linear-gradient(135deg,#1a0a2a,#3a0a3a,#0a0a3a)"></div>
+    <div class="hero-slide" style="background:linear-gradient(135deg,#2a1a0a,#4a2a0a,#1a0a0a)"></div>
+  </div>
+  <div class="hero-content">
+    <span class="hero-tag" id="heroTag">⚽ Champions League</span>
+    <h1 id="heroTitle">Real Madrid Storm Into<br/>Semi-Finals Again</h1>
+    <p id="heroDesc">A dominant display from Vinícius Jr. and Mbappé powered Madrid past Arsenal 3–1 at the Bernabéu, booking their spot in the last four for the ninth time in eleven years.</p>
+    <div class="hero-actions">
+      <a href="#" class="btn-read">Read Full Story</a>
+      <div class="hero-dots">
+        <button class="hero-dot active" onclick="goSlide(0)"></button>
+        <button class="hero-dot" onclick="goSlide(1)"></button>
+        <button class="hero-dot" onclick="goSlide(2)"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE SCORES -->
+<div class="container">
+  <section class="section" id="scores">
+    <div class="section-header">
+      <div class="section-title">Live Scores</div>
+      <a href="#" class="view-all">All Scores →</a>
+    </div>
+    <div class="scores-row" id="scoresRow">
+      <!-- injected by JS -->
+    </div>
+  </section>
+
+  <!-- NEWS -->
+  <section class="section" id="football">
+    <div class="section-header">
+      <div class="section-title">Top Stories</div>
+      <a href="#" class="view-all">All News →</a>
+    </div>
+    <div class="sport-tabs">
+      <button class="sport-tab active" onclick="filterNews('all', this)">🌐 All</button>
+      <button class="sport-tab" onclick="filterNews('football', this)">⚽ Football</button>
+      <button class="sport-tab" onclick="filterNews('cricket', this)" id="cricket">🏏 Cricket</button>
+      <button class="sport-tab" onclick="filterNews('basketball', this)">🏀 Basketball</button>
+      <button class="sport-tab" onclick="filterNews('tennis', this)">🎾 Tennis</button>
+      <button class="sport-tab" onclick="filterNews('f1', this)">🏎️ F1</button>
+    </div>
+    <div class="news-grid" id="newsGrid">
+      <!-- injected by JS -->
+    </div>
+  </section>
+
+  <!-- STANDINGS + SIDEBAR -->
+  <section class="section">
+    <div class="two-col">
+      <div>
+        <div class="section-header">
+          <div class="section-title">EPL Standings</div>
+          <a href="#" class="view-all">Full Table →</a>
+        </div>
+        <table class="standings-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th><th>Form</th>
+            </tr>
+          </thead>
+          <tbody id="standingsBody">
+          </tbody>
+        </table>
+      </div>
+      <div class="sidebar">
+        <!-- Upcoming -->
+        <div class="widget">
+          <div class="widget-header">📅 Upcoming</div>
+          <div class="widget-body" id="upcomingList"></div>
+        </div>
+        <!-- Poll -->
+        <div class="widget">
+          <div class="widget-header">📊 Fan Poll</div>
+          <div class="widget-body">
+            <div class="poll-question">Who wins the UCL 2026?</div>
+            <div id="pollOptions"></div>
+            <div class="poll-total" id="pollTotal"></div>
+          </div>
+        </div>
+        <!-- Newsletter -->
+        <div class="widget">
+          <div class="widget-header">✉️ Newsletter</div>
+          <div class="widget-body">
+            <p class="newsletter-text">Get the morning briefing — top stories, live scores, and match previews straight to your inbox.</p>
+            <div class="newsletter-form">
+              <input type="email" class="newsletter-input" placeholder="your@email.com" id="newsletterEmail"/>
+              <button class="newsletter-btn" onclick="subscribeNewsletter()">Subscribe Free</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEOS -->
+  <section class="section" id="videos">
+    <div class="section-header">
+      <div class="section-title">Highlights & Videos</div>
+      <a href="#" class="view-all">Watch More →</a>
+    </div>
+    <div class="video-grid" id="videoGrid"></div>
+  </section>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="logo" style="font-size:24px">Sport<span>Pulse</span></a>
+      <p>Your go-to destination for live scores, breaking sports news, and in-depth analysis across football, cricket, basketball, tennis, and more.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Sports</h4>
+      <ul>
+        <li><a href="#">Football</a></li>
+        <li><a href="#">Cricket</a></li>
+        <li><a href="#">Basketball</a></li>
+        <li><a href="#">Tennis</a></li>
+        <li><a href="#">Formula 1</a></li>
+        <li><a href="#">Hockey</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Advertise</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a href="#">Press</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Use</a></li>
+        <li><a href="#">Cookie Policy</a></li>
+        <li><a href="#">Accessibility</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 SportsPulse. All rights reserved.</p>
+    <div class="social-links">
+      <a class="social-link" title="Twitter/X">𝕏</a>
+      <a class="social-link" title="Instagram">📸</a>
+      <a class="social-link" title="YouTube">▶️</a>
+      <a class="social-link" title="Facebook">f</a>
+    </div>
+  </div>
+</footer>
+
+<!-- SIGN IN MODAL -->
+<div class="modal-overlay" id="signinModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle">Sign In</h2>
+    <p id="modalSubtitle">Welcome back to SportsPulse</p>
+    <div class="modal-form" id="modalForm">
+      <input class="modal-input" type="email" placeholder="Email address" id="modalEmail"/>
+      <input class="modal-input" type="password" placeholder="Password" id="modalPassword"/>
+      <button class="modal-btn" onclick="handleAuth()">Sign In</button>
+    </div>
+    <div class="modal-switch">Don't have an account? <a onclick="switchModal()">Register free</a></div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+const heroData = [
+  { tag:'⚽ Champions League', title:'Real Madrid Storm Into<br/>Semi-Finals Again', desc:'A dominant display from Vinícius Jr. and Mbappé powered Madrid past Arsenal 3–1 at the Bernabéu.', bg:'linear-gradient(135deg,#0a2a1a,#1a4a2a,#0a1a3a)' },
+  { tag:'🏏 IPL 2026', title:'Rohit Sharma Hits<br/>Record-Breaking Century', desc:'MI captain smashes 116* off 58 balls as Mumbai Indians chase down 218 against RCB at Wankhede.', bg:'linear-gradient(135deg,#1a0a2a,#3a0a3a,#0a0a3a)' },
+  { tag:'🏎️ Formula 1', title:'Verstappen Dominates<br/>Japanese Grand Prix', desc:'Max Verstappen converts pole to victory in Suzuka, extending his championship lead to 47 points.', bg:'linear-gradient(135deg,#2a1a0a,#4a2a0a,#1a0a0a)' },
+];
+
+const scoresData = [
+  { league:'UCL QF', home:'Real Madrid', away:'Arsenal', homeScore:3, awayScore:1, live:true, time:"HT", homeEmoji:'⚪', awayEmoji:'🔴' },
+  { league:'EPL', home:'Manchester City', away:'Chelsea', homeScore:2, awayScore:2, live:true, time:"67'", homeEmoji:'🔵', awayEmoji:'🔵' },
+  { league:'NBA', home:'Lakers', away:'Celtics', homeScore:108, awayScore:102, live:false, time:"FINAL", homeEmoji:'💛', awayEmoji:'🟢' },
+  { league:'IPL 2026', home:'MI', away:'CSK', homeScore:null, awayScore:null, live:false, time:"Today 19:30", homeEmoji:'🔵', awayEmoji:'🟡' },
+  { league:'Serie A', home:'Inter Milan', away:'Juventus', homeScore:1, awayScore:0, live:true, time:"82'", homeEmoji:'⚫', awayEmoji:'⚫' },
+  { league:'La Liga', home:'Barcelona', away:'Atlético', homeScore:2, awayScore:1, live:false, time:"FINAL", homeEmoji:'🔴', awayEmoji:'🔴' },
+];
+
+const allNews = [
+  { cat:'football', catLabel:'Football', title:'Vinícius Double Sends Real Madrid to UCL Semis', excerpt:'An electric night at the Bernabéu saw Vinícius Jr. score twice as Real Madrid ended Arsenal\'s European dream.', date:'2h ago', author:'Carlos Vega', emoji:'⚽' },
+  { cat:'cricket', catLabel:'Cricket', title:'IPL 2026: Rohit Sharma\'s Century Stuns RCB in Epic Chase', excerpt:'Mumbai Indians needed 219 to win off 20 overs. What followed was one of the greatest IPL innings ever.', date:'3h ago', author:'Priya Iyer', emoji:'🏏' },
+  { cat:'f1', catLabel:'Formula 1', title:'Verstappen Wins in Suzuka to Extend Title Lead', excerpt:'Max Verstappen delivered a masterclass in wet conditions to claim his fourth consecutive Japanese GP victory.', date:'5h ago', author:'Tom Briggs', emoji:'🏎️' },
+  { cat:'basketball', catLabel:'Basketball', title:'LeBron\'s Lakers Defeat Celtics in Thriller', excerpt:'Anthony Davis posted 32 points and 14 rebounds while LeBron James controlled the fourth quarter expertly.', date:'6h ago', author:'DeShawn Moore', emoji:'🏀' },
+  { cat:'tennis', catLabel:'Tennis', title:'Alcaraz Through After Sinner Retires Injured at Miami Open', excerpt:'Carlos Alcaraz advances to the quarterfinals as Jannik Sinner retires in the second set with a thigh injury.', date:'7h ago', author:'Sophie Bell', emoji:'🎾' },
+  { cat:'football', catLabel:'Football', title:'Salah Hat-Trick Destroys Manchester United at Anfield', excerpt:'The Egyptian king takes his EPL tally to 32 goals for the season in a ruthless Liverpool display.', date:'1d ago', author:'James Harvey', emoji:'⚽' },
+];
+
+const standings = [
+  { pos:1, name:'Liverpool', color:'#c8102e', p:31, w:23, d:5, l:3, gd:'+49', pts:74, form:['W','W','W','D','W'], zone:'qual' },
+  { pos:2, name:'Arsenal', color:'#EF0107', p:31, w:21, d:6, l:4, gd:'+38', pts:69, form:['W','D','W','W','L'], zone:'qual' },
+  { pos:3, name:'Man City', color:'#6CABDD', p:31, w:19, d:7, l:5, gd:'+32', pts:64, form:['D','W','W','W','D'], zone:'qual' },
+  { pos:4, name:'Chelsea', color:'#034694', p:31, w:18, d:5, l:8, gd:'+18', pts:59, form:['L','W','W','D','W'], zone:'qual' },
+  { pos:5, name:'Tottenham', color:'#132257', p:31, w:15, d:8, l:8, gd:'+11', pts:53, form:['W','D','L','W','D'], zone:'' },
+  { pos:6, name:'Aston Villa', color:'#670E36', p:31, w:14, d:6, l:11, gd:'+6', pts:48, form:['D','W','L','L','W'], zone:'' },
+  { pos:18, name:'Southampton', color:'#D71920', p:31, w:5, d:6, l:20, gd:'-31', pts:21, form:['L','L','D','L','L'], zone:'rel' },
+  { pos:19, name:'Ipswich', color:'#0044A6', p:31, w:4, d:5, l:22, gd:'-38', pts:17, form:['L','L','L','D','L'], zone:'rel' },
+  { pos:20, name:'Leicester', color:'#003090', p:31, w:3, d:4, l:24, gd:'-45', pts:13, form:['L','D','L','L','L'], zone:'rel' },
+];
+
+const upcoming = [
+  { home:'Barcelona', away:'PSG', time:'20:00', date:'Apr 1', league:'UCL' },
+  { home:'India', away:'Australia', time:'14:00', date:'Apr 2', league:'T20I' },
+  { home:'Knicks', away:'Heat', time:'19:30', date:'Apr 2', league:'NBA' },
+  { home:'Djokovic', away:'Alcaraz', time:'18:00', date:'Apr 3', league:'Miami Open' },
+];
+
+const poll = {
+  options: ['Real Madrid', 'Arsenal', 'Barcelona', 'Inter Milan'],
+  votes: [1240, 880, 760, 430],
+};
+
+const videos = [
+  { title:'Real Madrid 3-1 Arsenal: Extended Highlights', duration:'8:24', sport:'⚽', views:'2.1M views' },
+  { title:'Rohit Sharma 116* — Best IPL Innings of 2026', duration:'12:10', sport:'🏏', views:'4.8M views' },
+  { title:'Top 10 NBA Plays: Week 22', duration:'6:45', sport:'🏀', views:'900K views' },
+  { title:'F1 Suzuka GP: Verstappen vs Leclerc Battle', duration:'9:03', sport:'🏎️', views:'1.7M views' },
+  { title:'Alcaraz vs Sinner Miami Open — Best Moments', duration:'5:30', sport:'🎾', views:'620K views' },
+  { title:'Salah Hat-Trick vs Man United — Goals & Reactions', duration:'4:58', sport:'⚽', views:'5.2M views' },
+];
+
+// ── HERO SLIDER ──
+let currentSlide = 0, slideInterval;
+
+function goSlide(idx) {
+  currentSlide = idx;
+  const slides = document.querySelectorAll('.hero-slide');
+  const dots = document.querySelectorAll('.hero-dot');
+  slides.forEach((s,i) => s.classList.toggle('active', i===idx));
+  dots.forEach((d,i) => d.classList.toggle('active', i===idx));
+  document.getElementById('heroTag').textContent = heroData[idx].tag;
+  document.getElementById('heroTitle').innerHTML = heroData[idx].title;
+  document.getElementById('heroDesc').textContent = heroData[idx].desc;
+}
+
+function startSlider() {
+  slideInterval = setInterval(() => {
+    goSlide((currentSlide + 1) % heroData.length);
+  }, 5000);
+}
+startSlider();
+
+// ── SCORES ──
+function renderScores() {
+  const container = document.getElementById('scoresRow');
+  container.innerHTML = scoresData.map(s => {
+    const hasScore = s.homeScore !== null;
+    const homeLeading = hasScore && s.homeScore > s.awayScore;
+    const awayLeading = hasScore && s.awayScore > s.homeScore;
+    return `
+      <div class="score-card ${s.live ? 'live' : ''}">
+        <div class="score-meta">
+          <span class="score-league">${s.league}</span>
+          ${s.live ? '<span class="live-badge">LIVE</span>' : ''}
+        </div>
+        <div class="score-teams">
+          <div class="score-team">
+            <div class="team-info">
+              <div class="team-badge">${s.homeEmoji}</div>
+              <span class="team-name">${s.home}</span>
+            </div>
+            ${hasScore ? `<span class="team-score ${homeLeading ? 'leading' : ''}">${s.homeScore}</span>` : ''}
+          </div>
+          <div class="score-team">
+            <div class="team-info">
+              <div class="team-badge">${s.awayEmoji}</div>
+              <span class="team-name">${s.away}</span>
+            </div>
+            ${hasScore ? `<span class="team-score ${awayLeading ? 'leading' : ''}">${s.awayScore}</span>` : ''}
+          </div>
+        </div>
+        <div class="score-time">${s.time}</div>
+      </div>`;
+  }).join('');
+}
+
+// ── NEWS ──
+let activeFilter = 'all';
+
+function renderNews(filter) {
+  const container = document.getElementById('newsGrid');
+  const filtered = filter === 'all' ? allNews : allNews.filter(n => n.cat === filter);
+  container.innerHTML = filtered.map((n, i) => `
+    <div class="news-card ${i===0 && filter==='all' ? 'featured' : ''}">
+      <div class="news-img">
+        <div class="news-img-placeholder">${n.emoji}</div>
+      </div>
+      <div class="news-body">
+        <span class="news-category cat-${n.cat}">${n.catLabel}</span>
+        <div class="news-title">${n.title}</div>
+        <div class="news-excerpt">${n.excerpt}</div>
+        <div class="news-footer">
+          <span class="news-date">${n.date}</span>
+          <div class="news-dot"></div>
+          <span class="news-author">${n.author}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function filterNews(cat, btn) {
+  document.querySelectorAll('.sport-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderNews(cat);
+}
+
+// ── STANDINGS ──
+function renderStandings() {
+  const tbody = document.getElementById('standingsBody');
+  tbody.innerHTML = standings.map(t => {
+    const formHtml = t.form.map(f => {
+      const cls = f==='W' ? 'form-w' : f==='D' ? 'form-d' : 'form-l';
+      return `<span class="${cls}">${f}</span>`;
+    }).join('');
+    return `
+      <tr class="${t.zone === 'qual' ? 'qual-zone' : t.zone === 'rel' ? 'rel-zone' : ''}">
+        <td>${t.pos}</td>
+        <td><div class="team-row"><div class="team-color-dot" style="background:${t.color}"></div>${t.name}</div></td>
+        <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+        <td>${t.gd}</td>
+        <td class="pts-cell">${t.pts}</td>
+        <td><div class="form-badges">${formHtml}</div></td>
+      </tr>`;
+  }).join('');
+}
+
+// ── UPCOMING ──
+function renderUpcoming() {
+  const container = document.getElementById('upcomingList');
+  container.innerHTML = upcoming.map(m => `
+    <div class="match-item">
+      <div class="match-teams">
+        <div class="match-team-name">${m.home}</div>
+        <div class="match-team-name" style="color:var(--muted)">vs ${m.away}</div>
+      </div>
+      <div>
+        <div class="match-time">${m.time}</div>
+        <div class="match-date">${m.date} · ${m.league}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── POLL ──
+function renderPoll() {
+  const total = poll.votes.reduce((a,b) => a+b, 0);
+  const container = document.getElementById('pollOptions');
+  container.innerHTML = poll.options.map((opt, i) => {
+    const pct = Math.round(poll.votes[i] / total * 100);
+    return `
+      <div class="poll-option" onclick="votePoll(${i})">
+        <div class="poll-option-bar">
+          <div class="poll-option-fill" style="width:${pct}%"></div>
+          <div class="poll-option-label">
+            <span>${opt}</span>
+            <span class="poll-pct">${pct}%</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('pollTotal').textContent = `${total.toLocaleString()} votes`;
+}
+
+function votePoll(idx) {
+  poll.votes[idx]++;
+  renderPoll();
+}
+
+// ── VIDEOS ──
+function renderVideos() {
+  const container = document.getElementById('videoGrid');
+  container.innerHTML = videos.map(v => `
+    <div class="video-card">
+      <div class="video-thumb">
+        <div class="video-thumb-inner">${v.sport}</div>
+        <div class="play-btn"><div class="play-icon">▶</div></div>
+        <span class="video-duration">${v.duration}</span>
+      </div>
+      <div class="video-info">
+        <div class="video-title">${v.title}</div>
+        <div class="video-meta">${v.views}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── SEARCH ──
+function toggleSearch() {
+  const overlay = document.getElementById('searchOverlay');
+  overlay.classList.toggle('active');
+  if (overlay.classList.contains('active')) document.getElementById('searchInput').focus();
+}
+
+function handleSearch(e) {
+  if (e.key === 'Escape') toggleSearch();
+  if (e.key === 'Enter') {
+    const q = document.getElementById('searchInput').value.trim();
+    if (q) alert(`Searching for: "${q}"\n\n(Connect to a search API to show real results)`);
+  }
+}
+document.getElementById('searchOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('searchOverlay')) toggleSearch();
+});
+
+// ── MODAL ──
+let isSignIn = true;
+
+function openModal(type) {
+  document.getElementById('signinModal').classList.add('active');
+}
+function closeModal() {
+  document.getElementById('signinModal').classList.remove('active');
+}
+function switchModal() {
+  isSignIn = !isSignIn;
+  document.getElementById('modalTitle').textContent = isSignIn ? 'Sign In' : 'Create Account';
+  document.getElementById('modalSubtitle').textContent = isSignIn ? 'Welcome back to SportsPulse' : 'Join millions of sports fans';
+  document.querySelector('.modal-switch').innerHTML = isSignIn
+    ? 'Don\'t have an account? <a onclick="switchModal()">Register free</a>'
+    : 'Already have an account? <a onclick="switchModal()">Sign in</a>';
+  document.querySelector('.modal-btn').textContent = isSignIn ? 'Sign In' : 'Create Account';
+}
+function handleAuth() {
+  const email = document.getElementById('modalEmail').value;
+  const pass = document.getElementById('modalPassword').value;
+  if (!email || !pass) { alert('Please fill in all fields.'); return; }
+  alert(`${isSignIn ? 'Signing in' : 'Creating account'} for: ${email}\n\n(Connect to your auth backend)`);
+  closeModal();
+}
+document.getElementById('signinModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('signinModal')) closeModal();
+});
+
+// ── NEWSLETTER ──
+function subscribeNewsletter() {
+  const email = document.getElementById('newsletterEmail').value.trim();
+  if (!email || !email.includes('@')) { alert('Please enter a valid email address.'); return; }
+  alert(`✅ Subscribed: ${email}\n\nThank you for joining SportsPulse!`);
+  document.getElementById('newsletterEmail').value = '';
+}
+
+// ── INIT ──
+renderScores();
+renderNews('all');
+renderStandings();
+renderUpcoming();
+renderPoll();
+renderVideos();
+
+// Smooth nav highlight on scroll
+window.addEventListener('scroll', () => {
+  const sections = ['scores','football','videos'];
+  const links = document.querySelectorAll('.nav-links a');
+  let active = '';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 100) active = id;
+  });
+  links.forEach(l => {
+    const href = l.getAttribute('href').replace('#','');
+    l.classList.toggle('active', href === active || (active==='' && href==='#'));
+  });
+});
+</script>
+</body>
+</html>
